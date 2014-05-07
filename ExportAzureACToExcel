@@ -1,0 +1,557 @@
+$publishFilePath = Read-Host "Azure subscription publish file path: "
+Import-AzurePublishSettingsFile -PublishSettingsFile $publishFilePath
+
+$fileSave = Read-Host "Enter path to save file"
+$fileName = Read-Host "Enter desired file name"
+$fileName = $fileName + ".xlsx"
+$fileSavePath = $fileSave + $fileName
+
+$notAvailable = "N/A"    
+$FinalExcelRow = 2
+
+function GetSqlAzureServer(){
+    $sqlAzureServer = Get-AzureSqlDatabaseServer
+    return $sqlAzureServer
+}
+
+function GetSqlAzureDB($dbServerName){
+    $sqlAzure = Get-AzureSqlDatabase -ServerName $dbServerName
+    return $sqlAzure
+}
+
+function GetAzureVM(){
+    $vmList = Get-AzureVM
+    return $vmList
+}
+
+function GetAzureCloudService(){
+    $serviceList = Get-AzureService
+    return $serviceList
+}
+
+function GetAzureStorage(){
+    $storageAccountList = Get-AzureStorageAccount
+    return $storageAccountList
+}
+
+function GetAzureWebSites(){
+    $aZWebsite = Get-AzureWebsite
+    return $aZWebsite
+}
+
+function CreateRowsNColumnsForWebSite($FinalWorkSheet, $azureWSDetails){
+    
+    # Add Header        
+    $FinalWorkSheet.Cells.Item(1,1) = "Name";    
+    $FinalWorkSheet.Cells.Item(1,1).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,2) = "State"    
+    $FinalWorkSheet.Cells.Item(1,2).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,3) = "Host Names"    
+    $FinalWorkSheet.Cells.Item(1,3).Font.Bold = $True 
+
+
+    for($i = 0; $i -lt $azureWSDetails.Count; $i++){
+
+        if($azureWSDetails.Name -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 1) = $azureWSDetails[$i].Name
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,1) = $notAvailable
+        }
+
+        if($azureWSDetails.State -ne $null){    
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,2) = $azureWSDetails[$i].State
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,2) = $notAvailable
+        }
+        
+        if($azureWSDetails.HostNames -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,3) = $azureWSDetails[$i].HostNames
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,3) = $notAvailable
+        }
+    }
+}
+
+function CreateRowsNColumnsForVM($FinalWorkSheet, $azureVMDetails){
+    # Add Header
+        
+    $FinalWorkSheet.Cells.Item(1,1) = "ServiceName";    
+    $FinalWorkSheet.Cells.Item(1,1).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,2) = "VMName"    
+    $FinalWorkSheet.Cells.Item(1,2).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,3) = "Status"    
+    $FinalWorkSheet.Cells.Item(1,3).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,4) = "AvailabilitySetName";    
+    $FinalWorkSheet.Cells.Item(1,4).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,5) = "DeploymentName"    
+    $FinalWorkSheet.Cells.Item(1,5).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,6) = "DNSName"   
+    $FinalWorkSheet.Cells.Item(1,6).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,7) = "InstanceName";    
+    $FinalWorkSheet.Cells.Item(1,7).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,8) = "InstanceSize"    
+    $FinalWorkSheet.Cells.Item(1,8).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,9) = "IpAddress"    
+    $FinalWorkSheet.Cells.Item(1,9).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,10) = "InstanceStateDetails"    
+    $FinalWorkSheet.Cells.Item(1,10).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,11) = "Label"    
+    $FinalWorkSheet.Cells.Item(1,11).Font.Bold = $True 
+    
+    # As the first row is already filled with header, the row count will start from 2
+    
+    #Do {
+    
+    for($i = 0; $i -lt $azureVMDetails.Count; $i++){
+
+        if($azureVMDetails.ServiceName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 1) = $azureVMDetails[$i].ServiceName
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,1) = $notAvailable
+        }
+
+        if($azureVMDetails.Name -ne $null){    
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,2) = $azureVMDetails[$i].Name
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,2) = $notAvailable
+        }
+        
+        if($azureVMDetails.Status -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,3) = $azureVMDetails[$i].Status
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,3) = $notAvailable
+        }
+        
+        if($azureVMDetails.AvailabilitySetName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,4) = $azureVMDetails[$i].AvailabilitySetName
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,4) = $notAvailable
+        }
+        
+        if($azureVMDetails.DeploymentName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,5) = $azureVMDetails[$i].DeploymentName
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,5) = $notAvailable
+        }
+
+        if($azureVMDetails.DNSName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,6) = $azureVMDetails[$i].DNSName
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,6) = $notAvailable
+        }
+
+        if($azureVMDetails.InstanceName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,7) = $azureVMDetails[$i].InstanceName
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,7) = $notAvailable
+        }
+
+        if($azureVMDetails.InstanceName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,8) = $azureVMDetails[$i].InstanceSize
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,8) = $notAvailable
+        }
+
+        if($azureVMDetails.IpAddress -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,9) = $azureVMDetails[$i].IpAddress
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,9) = $notAvailable
+        }
+
+        if($azureVMDetails.AvailabilitySetName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,10) = $azureVMDetails[$i].InstanceStateDetails
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,10) = $notAvailable
+        }
+
+        if($azureVMDetails.AvailabilitySetName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,11) = $azureVMDetails[$i].Label
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,11) = $notAvailable
+        }
+
+    }
+    $FinalExcelRow++
+    
+    #  }while
+    #  {
+    #  }
+}
+
+function CreateRowsNColumnsForCService($FinalWorkSheet, $azureCSDetails){ 
+
+    # Add Header
+    
+    $FinalWorkSheet.Cells.Item(1,1) = "Label";
+    $FinalWorkSheet.Cells.Item(1,1).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,2) = "Description"
+    $FinalWorkSheet.Cells.Item(1,2).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,3) = "AffinityGroup"
+    $FinalWorkSheet.Cells.Item(1,3).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,4) = "Location";
+    $FinalWorkSheet.Cells.Item(1,4).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,5) = "Status"
+    $FinalWorkSheet.Cells.Item(1,5).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,6) = "DateModified"
+    $FinalWorkSheet.Cells.Item(1,6).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,7) = "DateCreated";
+    $FinalWorkSheet.Cells.Item(1,7).Font.Bold = $True 
+    
+    #$FinalWorkSheet.Cells.Item(1,8) = "Url"
+    #$FinalWorkSheet.Cells.Item(1,8).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,8) = "ServiceName"
+    $FinalWorkSheet.Cells.Item(1,8).Font.Bold = $True 
+    
+    # As the first row is already filled with header, the row count will start from 2
+    
+    for($i = 0; $i -lt $azureCSDetails.Count; $i++){
+
+        if($azureCSDetails.Label -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 1) = $azureCSDetails[$i].Label
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 1) = "N/A"
+        }
+
+        if($azureCSDetails.Description -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 2) = $azureCSDetails[$i].Description
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 2) = "N/A"
+        }
+
+        if($azureCSDetails.AffinityGroup -ne $null){
+        $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 3) = $azureCSDetails[$i].AffinityGroup
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 3) = "N/A"
+        }
+
+        if($azureCSDetails.Location -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 4) = $azureCSDetails[$i].Location
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 4) = "N/A"
+        }
+
+        if($azureCSDetails.Status -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 5) = $azureCSDetails[$i].Status
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 5) = "N/A"
+        }
+
+        if($azureCSDetails.DateModified -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 6) = $azureCSDetails[$i].DateModified
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 6) = "N/A"
+        }
+
+        if($azureCSDetails.DateCreated -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 7) = $azureCSDetails[$i].DateCreated
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 7) = "N/A"
+        }
+
+        #if($azureCSDetails.Url -ne $null){
+            #$FinalWorkSheet.Cells.Item($FinalExcelRow + $i,8) = $azureCSDetails[$i].Url
+        #}else{
+         #   $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,8) = "N/A"
+        #}
+
+        if($azureCSDetails.ServiceName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 8) = $azureCSDetails[$i].ServiceName
+        }else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i, 8) = "N/A"
+        }
+    }   
+        
+    $FinalExcelRow++
+}
+
+function CreateRowsNColumnsForStorageAccount($FinalWorkSheet, $azureStorageDetails){ 
+    
+    # Add Header    
+    
+    $FinalWorkSheet.Cells.Item(1,1) = "AffinityGroup";    
+    $FinalWorkSheet.Cells.Item(1,1).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,2) = "Location"    
+    $FinalWorkSheet.Cells.Item(1,2).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,3) = "GeoReplicationEnabled"    
+    $FinalWorkSheet.Cells.Item(1,3).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,4) = "GeoPrimaryLocation";    
+    $FinalWorkSheet.Cells.Item(1,4).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,5) = "GeoSecondaryLocation"    
+    $FinalWorkSheet.Cells.Item(1,5).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,6) = "Label"   
+    $FinalWorkSheet.Cells.Item(1,6).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,7) = "StorageAccountStatus";    
+    $FinalWorkSheet.Cells.Item(1,7).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item(1,8) = "StatusOfPrimary"    
+    $FinalWorkSheet.Cells.Item(1,8).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,9) = "StatusOfSecondary"    
+    $FinalWorkSheet.Cells.Item(1,9).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,10) = "Endpoints"    
+    $FinalWorkSheet.Cells.Item(1,10).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item(1,11) = "StorageAccountName"    
+    $FinalWorkSheet.Cells.Item(1,11).Font.Bold = $True 
+    
+    # As the first row is already filled with header, the row count will start from 2
+    
+    for($i = 0; $i -lt $azureStorageDetails.Count; $i++){   
+        
+        if($azureStorageDetails.ServiceName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,1) = $azureStorageDetails[$i].ServiceName    
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,1) = $notAvailable
+        }
+
+        if($azureStorageDetails.Name -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,2) = $azureStorageDetails[$i].Name    
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,2) = $notAvailable
+        }
+
+        if($azureStorageDetails.Status -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,3) = $azureStorageDetails[$i].Status    
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,3) = $notAvailable
+        }
+
+        if($azureStorageDetails.AvailabilitySetName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,4) = $azureStorageDetails[$i].AvailabilitySetName    
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,4) = $notAvailable
+        }
+
+        if($azureStorageDetails.DeploymentName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,5) = $azureStorageDetails[$i].DeploymentName    
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,5) = $notAvailable
+        }
+
+        if($azureStorageDetails.ServiceName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,6) = $azureStorageDetails[$i].DNSName    
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,6) = $notAvailable
+        }
+
+        if($azureStorageDetails.InstanceName -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,7) = $azureStorageDetails[$i].InstanceName    
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,7) = $notAvailable
+        }
+
+        if($azureStorageDetails.InstanceSize -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,8) = $azureStorageDetails[$i].InstanceSize    
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,8) = $notAvailable
+        }
+
+        if($azureStorageDetails.IpAddress -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,9) = $azureStorageDetails.IpAddress    
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,9) = $notAvailable
+        }
+
+        if($azureStorageDetails.InstanceStateDetails -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,10) = $azureStorageDetails[$i].InstanceStateDetails    
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,10) = $notAvailable
+        }
+
+        if($azureStorageDetails.Label -ne $null){
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,11) = $azureStorageDetails[$i].Label    
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($FinalExcelRow + $i,11) = $notAvailable
+        }
+    }
+    $FinalExcelRow++
+}
+
+function CreateRowsNColumnsForSQLAzure($FinalWorkSheet, $azureSqlDetails, $azureSqlServer, $headerRow, $DataRow){
+
+    # Add Header
+
+    $FinalWorkSheet.Cells.Item($headerRow, 1) = "Server Name"
+    $FinalWorkSheet.Cells.Item($headerRow, 1).Font.Bold = $True
+
+    $FinalWorkSheet.Cells.Item($headerRow, 2) = "Location"
+    $FinalWorkSheet.Cells.Item($headerRow, 2).Font.Bold = $True
+
+    $FinalWorkSheet.Cells.Item($headerRow, 3) = "AdministratorLogin"
+    $FinalWorkSheet.Cells.Item($headerRow, 3).Font.Bold = $True
+
+    $FinalWorkSheet.Cells.Item($headerRow + 1, 1) = $azureSqlServer.ServerName
+    $FinalWorkSheet.Cells.Item($headerRow + 1, 2) = $azureSqlServer.Location
+    $FinalWorkSheet.Cells.Item($headerRow + 1, 3) = $azureSqlServer.AdministratorLogin
+
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 1) = "Name";    
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 1).Font.Bold = $True 
+    
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 2) = "Collation Name"    
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 2).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 3) = "Edition"    
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 3).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 4) = "Max-Size(in GB)"    
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 4).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 5) = "Service Objective Name"    
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 5).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 6) = "Service Objective Assignment State Description"    
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 6).Font.Bold = $True 
+
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 7) = "Creation Date"    
+    $FinalWorkSheet.Cells.Item($headerRow + 3, 7).Font.Bold = $True 
+
+    
+
+    for($i = 0; $i -lt $azureSqlDetails.Count; $i++){
+
+        if($azureSqlDetails.Name -ne $null){
+            $FinalWorkSheet.Cells.Item($DataRow + $i, 1) = $azureSqlDetails[$i].Name
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($DataRow + $i,1) = $notAvailable
+        }
+
+        if($azureSqlDetails.CollationName -ne $null){    
+            $FinalWorkSheet.Cells.Item($DataRow + $i,2) = $azureSqlDetails[$i].CollationName
+        }
+        else{
+            $FinalWorkSheet.Cells.Item($DataRow + $i,2) = $notAvailable
+        }
+        
+        if($azureSqlDetails.Edition -ne $null){
+            $FinalWorkSheet.Cells.Item($DataRow + $i,3) = $azureSqlDetails[$i].Edition
+        }else{
+            $FinalWorkSheet.Cells.Item($DataRow + $i,3) = $notAvailable
+        }
+
+        if($azureSqlDetails.MaxSizeGB -ne $null){
+            $FinalWorkSheet.Cells.Item($DataRow + $i,4) = $azureSqlDetails[$i].MaxSizeGB
+        }else{
+            $FinalWorkSheet.Cells.Item($DataRow + $i,4) = $notAvailable
+        }
+
+        if($azureSqlDetails.ServiceObjectiveName -ne $null){
+            $FinalWorkSheet.Cells.Item($DataRow + $i,5) = $azureSqlDetails[$i].ServiceObjectiveName
+        }else{
+            $FinalWorkSheet.Cells.Item($DataRow + $i,5) = $notAvailable
+        }
+
+        if($azureSqlDetails.ServiceObjectiveAssignmentStateDescription -ne $null){
+            $FinalWorkSheet.Cells.Item($DataRow + $i,6) = $azureSqlDetails[$i].ServiceObjectiveAssignmentStateDescription
+        }else{
+            $FinalWorkSheet.Cells.Item($DataRow + $i,6) = $notAvailable
+        }
+
+        if($azureSqlDetails.CreationDate -ne $null){
+            $FinalWorkSheet.Cells.Item($DataRow + $i,7) = $azureSqlDetails[$i].CreationDate
+        }else{
+            $FinalWorkSheet.Cells.Item($DataRow + $i,7) = $notAvailable
+        }
+    }
+}
+
+function CreateExcel($azureVMDetails, $azureCSDetails, $azureStorageDetails, $azureWebsite){
+    $excel = new-object -comobject Excel.Application 
+    
+    # Make Excel visible 
+    $excel.visible = $true 
+       
+    # Create a new workbook 
+    $workbook = $excel.workbooks.add()    
+        
+    # Get sheet and update sheet name 
+    $s1 = $workbook.sheets | where {$_.name -eq 'Sheet1'} 
+    $s1.name = "Azure Virtual Machine" 
+
+    # The default workbook has three sheets, remove 2 
+    $s2 = $workbook.sheets.Add()
+    $s3 = $workbook.sheets.Add()
+    $s4 = $workbook.sheets.Add()
+    $s5 = $workbook.Sheets.Add()
+
+    $s2 = $workbook.sheets | where {$_.name -eq 'Sheet2'} 
+    $s2.name = "Azure Cloud Service" 
+
+    $s3 = $workbook.sheets | where {$_.name -eq 'Sheet3'} 
+    $s3.name = "Azure Storage Account" 
+
+    $s4 = $workbook.sheets | where {$_.name -eq 'Sheet4'} 
+    $s4.name = "Azure WebSites" 
+
+    $s5 = $workbook.sheets | where {$_.name -eq 'Sheet5'} 
+    $s5.name = "SQL Azure" 
+
+    CreateRowsNColumnsForVM -FinalWorkSheet $s1 -azureVMDetails $azureVMDetails
+    CreateRowsNColumnsForCService -FinalWorkSheet $s2 -azureCSDetails $azureCSDetails
+    CreateRowsNColumnsForStorageAccount -FinalWorkSheet $s3 -azureStorageDetails $azureStorageDetails
+    CreateRowsNColumnsForWebSite -FinalWorkSheet $s4 -azureWSDetails $azureWebsite
+
+    $azSqlServer = GetSqlAzureServer
+    $headRow = 1;
+    $DataRow = 5;
+
+    for($i = 0; $i -lt $azSqlServer.Count; $i++){
+        $azSqlDB = GetSqlAzureDB -dbServerName $azSqlServer[$i].ServerName       
+
+        CreateRowsNColumnsForSQLAzure -FinalWorkSheet $s5 -azureSqlDetails $azSqlDB `
+         -azureSqlServer $azSqlServer[$i] -headerRow $headRow -DataRow $DataRow
+
+        $headRow = $azSqlDB.Count + 6;
+        $DataRow = $headRow + 4;
+    }
+       
+   $workbook.SaveAs($fileSavePath)
+}
+
+$storage = GetAzureStorage
+$cs = GetAzureCloudService
+$vm = GetAzureVM
+$website = GetAzureWebSites
+
+CreateExcel -azureVMDetails $vm -azureCSDetails $cs -azureStorageDetails $storage -azureWebsite $website 
