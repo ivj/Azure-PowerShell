@@ -1,0 +1,21 @@
+function Install-WinRmCertificate($ServiceName, $VmName)
+{
+    $vm = Get-AzureVM -ServiceName $ServiceName
+    $winRmCertificateThumbprint = $vm.VM.DefaultWinRMCertificateThumbprint
+    
+    $winRmCertificate = Get-AzureCertificate -ServiceName $ServiceName -Thumbprint $winRmCertificateThumbprint -ThumbprintAlgorithm sha1
+    
+    $installedCert = Get-Item Cert:\CurrentUser\My\$winRmCertificateThumbprint -ErrorAction SilentlyContinue
+    
+    if ($installedCert -eq $null)
+    {
+        $certBytes = [System.Convert]::FromBase64String($winRmCertificate.Data)
+        $x509Cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate
+        $x509Cert.Import($certBytes)
+        
+        $store = New-Object System.Security.Cryptography.X509Certificates.X509Store "Root", "LocalMachine"
+        $store.Open("ReadWrite")
+        $store.Add($x509Cert)
+        $store.Close()
+    }
+}
