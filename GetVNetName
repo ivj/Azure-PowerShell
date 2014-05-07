@@ -1,0 +1,17 @@
+$scriptpath = $MyInvocation.MyCommand.Path
+$Path = Split-Path $scriptpath
+$fileName = "MyAzVNet.xml"
+$filePath = $Path + "\" + $fileName
+
+
+ $configFileContent = [Xml] "<?xml version=""1.0"" encoding=""utf-8""?>
+    <NetworkConfiguration xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns=""http://schemas.microsoft.com/ServiceHosting/2011/07/NetworkConfiguration"">
+      <VirtualNetworkConfiguration>
+        <Dns />
+        <VirtualNetworkSites/>
+      </VirtualNetworkConfiguration>
+    </NetworkConfiguration>"
+    
+ $configFileContent.Save($filePath)
+
+Get-AzureVNetConfig -ExportToFile $filePath
